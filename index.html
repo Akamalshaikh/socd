@@ -24,15 +24,123 @@
 
         body {
             background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(189, 0, 255, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 242, 255, 0.1) 0%, transparent 40%);
             color: #fff;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- Background Effects --- */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: floatOrb 10s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(0, 242, 255, 0.15);
+            top: -100px;
+            left: -100px;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(189, 0, 255, 0.15);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 50px); }
+        }
+
+        /* --- Preloader --- */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .loader-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loader-logo {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        .loader-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: loadBar 2s ease-in-out forwards;
+        }
+
+        @keyframes pulseGlow {
+            from { text-shadow: 0 0 15px rgba(0, 242, 255, 0.3); transform: scale(1); }
+            to { text-shadow: 0 0 35px rgba(189, 0, 255, 0.7); transform: scale(1.05); }
+        }
+
+        @keyframes loadBar {
+            0% { width: 0%; }
+            50% { width: 60%; }
+            100% { width: 100%; }
+        }
+
+        /* --- Animations Class --- */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .delay-1 { animation-delay: 2.1s; } /* Starts after preloader finishes */
+        .delay-2 { animation-delay: 2.3s; }
+        .delay-3 { animation-delay: 2.5s; }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* --- Header Animation --- */
@@ -50,7 +158,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            animation: glow 3s infinite alternate;
+            animation: textShine 3s infinite alternate;
             margin-bottom: 0.5rem;
         }
 
@@ -60,9 +168,9 @@
             letter-spacing: 1px;
         }
 
-        @keyframes glow {
-            from { text-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
-            to { text-shadow: 0 0 20px rgba(189, 0, 255, 0.4); }
+        @keyframes textShine {
+            from { filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.4)); }
+            to { filter: drop-shadow(0 0 20px rgba(189, 0, 255, 0.6)); }
         }
 
         /* --- Main Card --- */
@@ -70,18 +178,20 @@
             width: 90%;
             max-width: 600px;
             background: var(--glass);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             padding: 2rem;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
             margin-bottom: 2rem;
-            transition: transform 0.3s ease;
+            transition: all 0.4s ease;
         }
 
         .container:hover {
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
-            border-color: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.15);
+            border-color: rgba(0, 242, 255, 0.4);
+            transform: translateY(-5px);
         }
 
         /* --- Input Area --- */
@@ -94,7 +204,7 @@
             width: 100%;
             padding: 15px 50px 15px 20px;
             background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--secondary);
+            border: 1px solid var(--glass-border);
             border-radius: 50px;
             color: #fff;
             font-size: 1rem;
@@ -104,7 +214,8 @@
 
         input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         .input-icon {
@@ -118,7 +229,8 @@
         .btn-process {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            background-size: 200% 200%;
             border: none;
             border-radius: 50px;
             color: white;
@@ -130,27 +242,34 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .btn-process:hover {
             transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
         }
 
         .btn-process:active {
             transform: scale(0.98);
         }
 
-        /* --- Loading Animation --- */
+        /* --- Loading Animation (Inline) --- */
         .loader {
             display: none;
             margin: 20px auto;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: var(--primary);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -162,10 +281,10 @@
         #result-area {
             display: none;
             margin-top: 2rem;
-            animation: slideUp 0.5s ease;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideUp {
+        @keyframes slideUpFade {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
@@ -177,6 +296,12 @@
             margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.05);
             text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .media-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .media-thumb {
@@ -185,17 +310,18 @@
             object-fit: cover;
             border-radius: 10px;
             margin-bottom: 15px;
-            border: 1px solid var(--secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .media-info h3 {
             font-size: 1.1rem;
             margin-bottom: 5px;
-            color: #eee;
+            color: #fff;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
         .media-info p {
-            color: #888;
+            color: #aaa;
             font-size: 0.85rem;
             margin-bottom: 15px;
         }
@@ -205,7 +331,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            background: transparent;
+            background: rgba(0, 242, 255, 0.1);
             border: 1px solid var(--primary);
             color: var(--primary);
             padding: 10px 20px;
@@ -215,23 +341,25 @@
             transition: all 0.3s;
             margin: 5px;
             cursor: pointer;
+            width: 100%;
         }
 
         .download-btn:hover {
             background: var(--primary);
             color: #000;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
         }
 
         .error-msg {
             color: #ff4d4d;
             background: rgba(255, 77, 77, 0.1);
-            padding: 10px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 12px;
             border: 1px solid rgba(255, 77, 77, 0.3);
             text-align: center;
             display: none;
             margin-top: 15px;
+            backdrop-filter: blur(5px);
         }
 
         /* --- Footer --- */
@@ -248,17 +376,31 @@
             h1 { font-size: 1.8rem; }
             .container { padding: 1.5rem; width: 95%; }
             .btn-process { font-size: 1rem; }
+            .loader-logo { font-size: 3.5rem; }
+            .orb-1, .orb-2 { opacity: 0.4; }
         }
     </style>
 </head>
 <body>
 
-    <header>
+    <!-- Background Orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <!-- Preloader Overlay -->
+    <div id="preloader">
+        <div class="loader-content">
+            <div class="loader-logo"><i class="fas fa-bolt"></i></div>
+            <div class="loader-bar"></div>
+        </div>
+    </div>
+
+    <header class="fade-in-up delay-1">
         <h1><i class="fas fa-bolt"></i> Solox</h1>
         <p class="subtitle">Universal Social Media Downloader</p>
     </header>
 
-    <div class="container">
+    <div class="container fade-in-up delay-2">
         <div class="input-group">
             <input type="text" id="urlInput" placeholder="Paste link here (Insta, TikTok, YT, FB...)" autocomplete="off">
             <i class="fas fa-link input-icon"></i>
@@ -276,13 +418,23 @@
         <!-- Dynamic Content loads here -->
     </div>
 
-    <footer>
+    <footer class="fade-in-up delay-3">
         <p>Supports: Instagram • Facebook • TikTok • YouTube • Twitter/X • Spotify • Pinterest</p>
         <p style="margin-top: 5px; opacity: 0.5;">&copy; 2024 Solox Web</p>
     </footer>
 
     <script>
         const API_BASE = "https://socialdown.itz-ashlynn.workers.dev";
+
+        // Remove Preloader when loaded
+        window.addEventListener('load', () => {
+            const preloader = document.getElementById('preloader');
+            // Allow animation to play for at least 2 seconds for effect
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                preloader.style.visibility = 'hidden';
+            }, 2000);
+        });
 
         async function processUrl() {
             const urlInput = document.getElementById('urlInput');
