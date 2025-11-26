@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solox Social Downloader</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #bd00ff;
+            --bg-dark: #050510;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-glow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(189, 0, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 242, 255, 0.1) 0%, transparent 40%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* --- Header Animation --- */
+        header {
+            text-align: center;
+            padding: 3rem 1rem;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: glow 3s infinite alternate;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+            to { text-shadow: 0 0 20px rgba(189, 0, 255, 0.4); }
+        }
+
+        /* --- Main Card --- */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
+            border-color: rgba(0, 242, 255, 0.3);
+        }
+
+        /* --- Input Area --- */
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--secondary);
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+        }
+
+        .btn-process {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-process:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
+        .btn-process:active {
+            transform: scale(0.98);
+        }
+
+        /* --- Loading Animation --- */
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Result Area --- */
+        #result-area {
+            display: none;
+            margin-top: 2rem;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .media-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .media-thumb {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--secondary);
+        }
+
+        .media-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #eee;
+        }
+
+        .media-info p {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        }
+
+        .error-msg {
+            color: #ff4d4d;
+            background: rgba(255, 77, 77, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            text-align: center;
+            display: none;
+            margin-top: 15px;
+        }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: auto;
+            padding: 2rem;
+            color: #666;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .container { padding: 1.5rem; width: 95%; }
+            .btn-process { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fas fa-bolt"></i> Solox</h1>
+        <p class="subtitle">Universal Social Media Downloader</p>
+    </header>
+
+    <div class="container">
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="Paste link here (Insta, TikTok, YT, FB...)" autocomplete="off">
+            <i class="fas fa-link input-icon"></i>
+        </div>
+
+        <button class="btn-process" onclick="processUrl()">
+            <span id="btnText">Get Content</span>
+        </button>
+
+        <div class="loader" id="loader"></div>
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <div class="container" id="result-area">
+        <!-- Dynamic Content loads here -->
+    </div>
+
+    <footer>
+        <p>Supports: Instagram • Facebook • TikTok • YouTube • Twitter/X • Spotify • Pinterest</p>
+        <p style="margin-top: 5px; opacity: 0.5;">&copy; 2024 Solox Web</p>
+    </footer>
+
+    <script>
+        const API_BASE = "https://socialdown.itz-ashlynn.workers.dev";
+
+        async function processUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            const loader = document.getElementById('loader');
+            const resultArea = document.getElementById('result-area');
+            const errorMsg = document.getElementById('errorMsg');
+            const btnText = document.getElementById('btnText');
+
+            if (!url) {
+                showError("Please paste a valid URL first.");
+                return;
+            }
+
+            // Reset UI
+            resultArea.style.display = 'none';
+            resultArea.innerHTML = '';
+            errorMsg.style.display = 'none';
+            loader.style.display = 'block';
+            btnText.textContent = "Processing...";
+            
+            const platform = detectPlatform(url);
+            
+            if (!platform) {
+                loader.style.display = 'none';
+                btnText.textContent = "Get Content";
+                showError("Unsupported link. Please try Instagram, TikTok, YouTube, Facebook, etc.");
+                return;
+            }
+
+            try {
+                // Determine Endpoint
+                let endpoint = "";
+                let params = `?url=${encodeURIComponent(url)}`;
+
+                // Special handling for YouTube to fetch both formats
+                if (platform === 'youtube') {
+                    endpoint = '/yt';
+                    // Fetch MP4 (default) and MP3 in parallel
+                    const [mp4Res, mp3Res] = await Promise.all([
+                        fetch(`${API_BASE}${endpoint}${params}&format=mp4`),
+                        fetch(`${API_BASE}${endpoint}${params}&format=mp3`)
+                    ]);
+                    
+                    const mp4Data = await mp4Res.json();
+                    const mp3Data = await mp3Res.json();
+
+                    loader.style.display = 'none';
+                    btnText.textContent = "Get Content";
+
+                    // Check if at least one worked. If both failed, show error.
+                    if ((!mp4Data.success && !mp3Data.success)) {
+                         showError(mp4Data.error || "Failed to fetch content.");
+                         return;
+                    }
+                    
+                    renderResult(platform, mp4Data, mp3Data);
+                    return; // Stop here for YT, as renderResult is called
+                }
+
+                switch(platform) {
+                    case 'instagram': endpoint = '/insta'; break;
+                    case 'facebook': endpoint = '/fb'; break;
+                    case 'tiktok': endpoint = '/tiktok'; break;
+                    case 'twitter': endpoint = '/x'; break;
+                    // YouTube handled above
+                    case 'spotify': endpoint = '/spotify'; break;
+                    case 'pinterest': endpoint = '/pinterest'; break;
+                    case 'mediafire': endpoint = '/mediafire'; break;
+                    case 'capcut': endpoint = '/capcut'; break;
+                    default: throw new Error("Platform logic error");
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}${params}`);
+                const data = await response.json();
+
+                loader.style.display = 'none';
+                btnText.textContent = "Get Content";
+
+                if (data.success === false || data.error) {
+                    showError(data.error || "Failed to fetch content.");
+                    return;
+                }
+
+                renderResult(platform, data);
+
+            } catch (err) {
+                loader.style.display = 'none';
+                btnText.textContent = "Get Content";
+                console.error(err);
+                showError("Connection failed. Possible CORS issue or server error.");
+            }
+        }
+
+        function detectPlatform(url) {
+            if (url.includes('instagram.com')) return 'instagram';
+            if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook';
+            if (url.includes('tiktok.com')) return 'tiktok';
+            if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter';
+            if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+            if (url.includes('spotify.com')) return 'spotify';
+            if (url.includes('pinterest.com') || url.includes('pin.it')) return 'pinterest';
+            if (url.includes('mediafire.com')) return 'mediafire';
+            if (url.includes('capcut.com')) return 'capcut';
+            return null;
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function renderResult(platform, data, extraData = null) {
+            const container = document.getElementById('result-area');
+            let html = '';
+
+            // --- Handlers based on Python Script Data Structure ---
+
+            if (platform === 'instagram') {
+                if (data.urls && data.urls.length > 0) {
+                    html += `<div class="media-info"><h3>Instagram Content</h3><p>Found ${data.urls.length} media file(s)</p></div>`;
+                    data.urls.forEach((link, index) => {
+                        html += `
+                        <div class="media-card">
+                            <p>Media ${index + 1}</p>
+                            <a href="${link}" target="_blank" class="download-btn" download>
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>`;
+                    });
+                } else {
+                    showError("No media links found.");
+                    return;
+                }
+            }
+
+            else if (platform === 'facebook') {
+                html += `<div class="media-info"><h3>Facebook Video</h3></div>`;
+                if (data.hd) {
+                    html += createDownloadCard("HD Video", data.hd, 'video');
+                }
+                if (data.sd) {
+                    html += createDownloadCard("SD Video", data.sd, 'video');
+                }
+                if (data.audio) {
+                    html += createDownloadCard("Audio", data.audio, 'audio');
+                }
+            }
+
+            else if (platform === 'tiktok') {
+                const vid = data.data && data.data[0];
+                if (vid) {
+                    const thumb = vid.thumbnail || '';
+                    const link = vid.downloadLinks && vid.downloadLinks[0] ? vid.downloadLinks[0].link : '';
+                    const title = vid.title || 'TikTok Video';
+                    
+                    if (thumb) html += `<img src="${thumb}" class="media-thumb">`;
+                    html += `<div class="media-info"><h3>${title}</h3></div>`;
+                    
+                    if (link) {
+                        html += createDownloadCard("Download Video (No Watermark)", link, 'video');
+                    }
+                }
+            }
+
+            else if (platform === 'twitter') {
+                if (data.found && data.media) {
+                    html += `<div class="media-info"><h3>X / Twitter Media</h3><p>By @${data.authorUsername || 'Unknown'}</p></div>`;
+                    data.media.forEach((item, idx) => {
+                        html += createDownloadCard(`Media ${idx + 1} (${item.type})`, item.url, item.type === 'video' ? 'video' : 'image');
+                    });
+                }
+            }
+
+            else if (platform === 'youtube') {
+                // data contains MP4 result, extraData contains MP3 result
+                
+                const vid = data.data && data.data[0];
+                const aud = extraData && extraData.data && extraData.data[0];
+                
+                // Use title from video, or audio if video failed
+                const title = (vid && vid.title) || (aud && aud.title) || 'YouTube Video';
+                const fileSize = (vid && vid.fileSize) || (aud && aud.fileSize) || '';
+                
+                html += `<div class="media-info"><h3>${title}</h3></div>`;
+                
+                if (vid && vid.downloadUrl) {
+                     html += createDownloadCard(`Download Video (${fileSize})`, vid.downloadUrl, 'video');
+                }
+                
+                if (aud && aud.downloadUrl) {
+                    html += createDownloadCard(`Download Audio (MP3)`, aud.downloadUrl, 'music');
+                }
+            }
+
+            else if (platform === 'spotify') {
+                html += `<div class="media-info">
+                            <h3>${data.name || 'Track'}</h3>
+                            <p>${data.artists ? data.artists.join(', ') : ''}</p>
+                         </div>`;
+                if(data.image) html += `<img src="${data.image}" class="media-thumb">`;
+                if (data.download_url) {
+                    html += createDownloadCard("Download MP3", data.download_url, 'music');
+                }
+            }
+
+            else if (platform === 'pinterest') {
+                if (data.medias && data.medias.length > 0) {
+                     html += `<div class="media-info"><h3>${data.title || 'Pinterest Pin'}</h3></div>`;
+                     data.medias.forEach(m => {
+                        html += createDownloadCard(`Download (${m.quality || 'Media'})`, m.url, m.extension === 'mp4' ? 'video' : 'image');
+                     });
+                }
+            }
+            
+            else if (platform === 'mediafire') {
+                 html += `<div class="media-info"><h3>${data.name || 'File'}</h3><p>Size: ${data.size || 'Unknown'}</p></div>`;
+                 if (data.download) {
+                     html += createDownloadCard("Download File", data.download, 'file');
+                 }
+            }
+
+            else if (platform === 'capcut') {
+                // CapCut in script only returns metadata and cover, no video download link usually exposed in this specific API config
+                html += `<div class="media-info">
+                            <h3>${data.title || 'Template'}</h3>
+                            <p>By: ${data.author} | Likes: ${data.like}</p>
+                        </div>`;
+                if (data.coverUrl) {
+                    html += `<img src="${data.coverUrl}" class="media-thumb">`;
+                    html += createDownloadCard("Download Cover Image", data.coverUrl, 'image');
+                }
+                html += `<p style="font-size:0.8rem; color:#888; margin-top:10px;">(This API endpoint provided metadata only)</p>`;
+            }
+
+            if (!html) {
+                showError("Content found, but no direct download links were returned by the API.");
+                return;
+            }
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        function createDownloadCard(label, url, type) {
+            let icon = 'fa-download';
+            if (type === 'video') icon = 'fa-video';
+            if (type === 'image') icon = 'fa-image';
+            if (type === 'music') icon = 'fa-music';
+            if (type === 'file') icon = 'fa-file';
+
+            return `
+            <div class="media-card">
+                <a href="${url}" target="_blank" class="download-btn">
+                    <i class="fas ${icon}"></i> ${label}
+                </a>
+            </div>`;
+        }
+    </script>
+</body>
+</html>
