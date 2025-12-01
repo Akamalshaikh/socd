@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solox Social Downloader</title>
+    <title>Akamal Social Downloader</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -135,7 +135,7 @@
             animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .delay-1 { animation-delay: 2.1s; } /* Starts after preloader finishes */
+        .delay-1 { animation-delay: 2.1s; } 
         .delay-2 { animation-delay: 2.3s; }
         .delay-3 { animation-delay: 2.5s; }
 
@@ -260,7 +260,7 @@
             transform: scale(0.98);
         }
 
-        /* --- Loading Animation (Inline) --- */
+        /* --- Loading Animation --- */
         .loader {
             display: none;
             margin: 20px auto;
@@ -289,6 +289,88 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* --- Reel Player Styles --- */
+        .reel-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px; /* Phone width approximation */
+            margin: 0 auto 20px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .reel-video {
+            width: 100%;
+            display: block;
+            max-height: 600px;
+            object-fit: contain; /* Ensures video isn't cropped weirdly */
+            background: #000;
+        }
+
+        /* Play Button Overlay */
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .play-overlay i {
+            color: #fff;
+            font-size: 30px;
+            margin-left: 5px; /* Visual center fix for play triangle */
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .play-overlay:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* Controls bar below video inside the container (optional) */
+        .reel-controls-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .reel-container:hover .reel-controls-bar {
+            opacity: 1;
+        }
+
+        .mini-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-shadow: 0 0 5px #000;
+        }
+
+        /* General Media Cards (for non-reels) */
         .media-card {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 15px;
@@ -326,6 +408,7 @@
             margin-bottom: 15px;
         }
 
+        /* Download Button Styles */
         .download-btn {
             display: inline-flex;
             align-items: center;
@@ -334,14 +417,17 @@
             background: rgba(0, 242, 255, 0.1);
             border: 1px solid var(--primary);
             color: var(--primary);
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 20px;
+            border-radius: 50px;
             text-decoration: none;
             font-weight: bold;
             transition: all 0.3s;
-            margin: 5px;
+            margin-top: 10px;
             cursor: pointer;
             width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
         }
 
         .download-btn:hover {
@@ -429,7 +515,6 @@
         // Remove Preloader when loaded
         window.addEventListener('load', () => {
             const preloader = document.getElementById('preloader');
-            // Allow animation to play for at least 2 seconds for effect
             setTimeout(() => {
                 preloader.style.opacity = '0';
                 preloader.style.visibility = 'hidden';
@@ -556,15 +641,10 @@
 
             if (platform === 'instagram') {
                 if (data.urls && data.urls.length > 0) {
-                    html += `<div class="media-info"><h3>Instagram Content</h3><p>Found ${data.urls.length} media file(s)</p></div>`;
+                    html += `<div class="media-info"><h3>Instagram Reel/Post</h3></div>`;
                     data.urls.forEach((link, index) => {
-                        html += `
-                        <div class="media-card">
-                            <p>Media ${index + 1}</p>
-                            <a href="${link}" target="_blank" class="download-btn" download>
-                                <i class="fas fa-download"></i> Download
-                            </a>
-                        </div>`;
+                        // Assuming most IG links are videos for "Reels"
+                        html += createReelPlayer(link, index);
                     });
                 } else {
                     showError("No media links found.");
@@ -575,13 +655,12 @@
             else if (platform === 'facebook') {
                 html += `<div class="media-info"><h3>Facebook Video</h3></div>`;
                 if (data.hd) {
-                    html += createDownloadCard("HD Video", data.hd, 'video');
-                }
-                if (data.sd) {
-                    html += createDownloadCard("SD Video", data.sd, 'video');
+                    html += createReelPlayer(data.hd, 'HD');
+                } else if (data.sd) {
+                     html += createReelPlayer(data.sd, 'SD');
                 }
                 if (data.audio) {
-                    html += createDownloadCard("Audio", data.audio, 'audio');
+                    html += createDownloadCard("Download Audio", data.audio, 'audio');
                 }
             }
 
@@ -592,11 +671,9 @@
                     const link = vid.downloadLinks && vid.downloadLinks[0] ? vid.downloadLinks[0].link : '';
                     const title = vid.title || 'TikTok Video';
                     
-                    if (thumb) html += `<img src="${thumb}" class="media-thumb">`;
                     html += `<div class="media-info"><h3>${title}</h3></div>`;
-                    
                     if (link) {
-                        html += createDownloadCard("Download Video (No Watermark)", link, 'video');
+                        html += createReelPlayer(link, 'No Watermark');
                     }
                 }
             }
@@ -605,25 +682,25 @@
                 if (data.found && data.media) {
                     html += `<div class="media-info"><h3>X / Twitter Media</h3><p>By @${data.authorUsername || 'Unknown'}</p></div>`;
                     data.media.forEach((item, idx) => {
-                        html += createDownloadCard(`Media ${idx + 1} (${item.type})`, item.url, item.type === 'video' ? 'video' : 'image');
+                        if (item.type === 'video') {
+                             html += createReelPlayer(item.url, idx);
+                        } else {
+                             html += createDownloadCard(`Download Image ${idx+1}`, item.url, 'image');
+                        }
                     });
                 }
             }
 
             else if (platform === 'youtube') {
-                // data contains MP4 result, extraData contains MP3 result
-                
                 const vid = data.data && data.data[0];
                 const aud = extraData && extraData.data && extraData.data[0];
-                
-                // Use title from video, or audio if video failed
                 const title = (vid && vid.title) || (aud && aud.title) || 'YouTube Video';
                 const fileSize = (vid && vid.fileSize) || (aud && aud.fileSize) || '';
                 
                 html += `<div class="media-info"><h3>${title}</h3></div>`;
                 
                 if (vid && vid.downloadUrl) {
-                     html += createDownloadCard(`Download Video (${fileSize})`, vid.downloadUrl, 'video');
+                      html += createReelPlayer(vid.downloadUrl, fileSize);
                 }
                 
                 if (aud && aud.downloadUrl) {
@@ -631,6 +708,7 @@
                 }
             }
 
+            // ... (Other platforms remain standard download cards) ...
             else if (platform === 'spotify') {
                 html += `<div class="media-info">
                             <h3>${data.name || 'Track'}</h3>
@@ -641,43 +719,105 @@
                     html += createDownloadCard("Download MP3", data.download_url, 'music');
                 }
             }
-
             else if (platform === 'pinterest') {
-                if (data.medias && data.medias.length > 0) {
-                     html += `<div class="media-info"><h3>${data.title || 'Pinterest Pin'}</h3></div>`;
-                     data.medias.forEach(m => {
-                        html += createDownloadCard(`Download (${m.quality || 'Media'})`, m.url, m.extension === 'mp4' ? 'video' : 'image');
-                     });
-                }
-            }
-            
-            else if (platform === 'mediafire') {
-                 html += `<div class="media-info"><h3>${data.name || 'File'}</h3><p>Size: ${data.size || 'Unknown'}</p></div>`;
-                 if (data.download) {
-                     html += createDownloadCard("Download File", data.download, 'file');
+                 if (data.medias && data.medias.length > 0) {
+                      html += `<div class="media-info"><h3>${data.title || 'Pinterest Pin'}</h3></div>`;
+                      data.medias.forEach(m => {
+                          if (m.extension === 'mp4') {
+                              html += createReelPlayer(m.url, m.quality);
+                          } else {
+                              html += createDownloadCard(`Download Image`, m.url, 'image');
+                          }
+                      });
                  }
             }
-
+            else if (platform === 'mediafire') {
+                 html += `<div class="media-info"><h3>${data.name || 'File'}</h3><p>Size: ${data.size || 'Unknown'}</p></div>`;
+                 if (data.download) html += createDownloadCard("Download File", data.download, 'file');
+            }
             else if (platform === 'capcut') {
-                // CapCut in script only returns metadata and cover, no video download link usually exposed in this specific API config
-                html += `<div class="media-info">
-                            <h3>${data.title || 'Template'}</h3>
-                            <p>By: ${data.author} | Likes: ${data.like}</p>
-                        </div>`;
+                html += `<div class="media-info"><h3>${data.title || 'Template'}</h3><p>By: ${data.author}</p></div>`;
                 if (data.coverUrl) {
                     html += `<img src="${data.coverUrl}" class="media-thumb">`;
-                    html += createDownloadCard("Download Cover Image", data.coverUrl, 'image');
+                    html += createDownloadCard("Download Cover", data.coverUrl, 'image');
                 }
-                html += `<p style="font-size:0.8rem; color:#888; margin-top:10px;">(This API endpoint provided metadata only)</p>`;
+                html += `<p style="font-size:0.8rem; color:#888;">(Metadata only)</p>`;
             }
 
             if (!html) {
-                showError("Content found, but no direct download links were returned by the API.");
+                showError("Content found, but no displayable links returned.");
                 return;
             }
 
             container.innerHTML = html;
             container.style.display = 'block';
+        }
+
+        // --- NEW: Reel Player Component ---
+        function createReelPlayer(url, label) {
+            const uniqueId = 'vid_' + Math.random().toString(36).substr(2, 9);
+            
+            return `
+            <div class="reel-container">
+                <div class="play-overlay" onclick="togglePlay('${uniqueId}', this)">
+                    <i class="fas fa-play"></i>
+                </div>
+                
+                <video id="${uniqueId}" class="reel-video" loop playsinline>
+                    <source src="${url}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+
+                <div class="reel-controls-bar">
+                    <button class="mini-btn" onclick="togglePlay('${uniqueId}', this.parentElement.previousElementSibling.previousElementSibling)"><i class="fas fa-play"></i></button>
+                     <button class="mini-btn" onclick="toggleMute('${uniqueId}', this)"><i class="fas fa-volume-mute"></i></button>
+                </div>
+            </div>
+            
+            <a href="${url}" target="_blank" class="download-btn" download>
+                <i class="fas fa-download"></i> Download ${label || ''}
+            </a>
+            <div style="margin-bottom: 30px;"></div>
+            `;
+        }
+
+        function togglePlay(id, overlayBtn) {
+            const video = document.getElementById(id);
+            const icon = overlayBtn.querySelector('i');
+            
+            // Find the mini play button in the control bar as well to update it
+            const container = video.parentElement;
+            const miniPlayBtn = container.querySelector('.reel-controls-bar .mini-btn i');
+
+            if (video.paused) {
+                video.play();
+                overlayBtn.style.opacity = '0'; // Hide big overlay
+                overlayBtn.style.pointerEvents = 'none'; // Click through to video
+                if(miniPlayBtn) { miniPlayBtn.classList.remove('fa-play'); miniPlayBtn.classList.add('fa-pause'); }
+                
+                // Clicking video pauses it
+                video.onclick = () => togglePlay(id, overlayBtn);
+            } else {
+                video.pause();
+                overlayBtn.style.opacity = '1'; // Show big overlay
+                overlayBtn.style.pointerEvents = 'auto';
+                if(miniPlayBtn) { miniPlayBtn.classList.remove('fa-pause'); miniPlayBtn.classList.add('fa-play'); }
+                video.onclick = null;
+            }
+        }
+
+        function toggleMute(id, btn) {
+            const video = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            video.muted = !video.muted;
+            
+            if (video.muted) {
+                icon.classList.remove('fa-volume-up');
+                icon.classList.add('fa-volume-mute');
+            } else {
+                icon.classList.remove('fa-volume-mute');
+                icon.classList.add('fa-volume-up');
+            }
         }
 
         function createDownloadCard(label, url, type) {
