@@ -527,8 +527,6 @@
                     const input = document.getElementById('urlInput');
                     input.value = text;
                     input.focus();
-                    // Optional: Auto-trigger process? 
-                    // processUrl(); 
                 }
             } catch (err) {
                 // Fallback for iframe restrictions
@@ -624,24 +622,31 @@
                 let endpoint = "";
                 let params = `?url=${encodeURIComponent(url)}`;
 
-                // Special handling for YouTube
-                if (platform === 'youtube') {
-                    endpoint = '/yt';
+                // Special handling for YouTube AND Instagram (Fetching MP3 + Video)
+                if (platform === 'youtube' || platform === 'instagram') {
+                    endpoint = platform === 'youtube' ? '/yt' : '/insta';
+                    
+                    // Fetch both formats in parallel
                     const [mp4Res, mp3Res] = await Promise.all([
                         fetch(`${API_BASE}${endpoint}${params}&format=mp4`),
                         fetch(`${API_BASE}${endpoint}${params}&format=mp3`)
                     ]);
                     
                     const mp4Data = await mp4Res.json();
-                    const mp3Data = await mp3Res.json();
+                    let mp3Data = null;
+                    try {
+                        mp3Data = await mp3Res.json();
+                    } catch(e) {
+                        console.warn("MP3 fetch failed or not supported for this platform type", e);
+                    }
 
                     completeProgress();
                     btn.disabled = false;
                     btn.style.opacity = '1';
 
-                    if ((!mp4Data.success && !mp3Data.success)) {
-                         showError(mp4Data.error || "Failed to fetch content.");
-                         return;
+                    if ((!mp4Data.success && (!mp3Data || !mp3Data.success))) {
+                          showError(mp4Data.error || "Failed to fetch content.");
+                          return;
                     }
                     
                     renderResult(platform, mp4Data, mp3Data);
@@ -650,7 +655,7 @@
                 }
 
                 switch(platform) {
-                    case 'instagram': endpoint = '/insta'; break;
+                    // Instagram moved to special handler above
                     case 'facebook': endpoint = '/fb'; break;
                     case 'tiktok': endpoint = '/tiktok'; break;
                     case 'twitter': endpoint = '/x'; break;
@@ -715,6 +720,21 @@
                     data.urls.forEach((link, index) => {
                         html += createReelPlayer(link, index);
                     });
+
+                    // Add MP3 Download Button if available from extra fetch or data
+                    let audioLink = null;
+                    
+                    // Check extraData (MP3 fetch)
+                    if (extraData && extraData.success) {
+                        if (extraData.audio) audioLink = extraData.audio;
+                        else if (extraData.urls && extraData.urls.length > 0) audioLink = extraData.urls[0]; // Sometimes it just returns the file
+                    }
+                    // Fallback to internal audio field if present
+                    if (!audioLink && data.audio) audioLink = data.audio;
+
+                    if (audioLink) {
+                        html += createDownloadCard("Download Audio (MP3)", audioLink, 'music');
+                    }
                 } else {
                     showError("No media links found.");
                     return;
